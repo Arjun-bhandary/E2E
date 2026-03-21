@@ -1,0 +1,22 @@
+{
+  "best_epoch": 9,
+  "auc": 0.960946212897902,
+  "accuracy": 0.904,
+  "f1": 0.9076034648700674,
+  "inv_fpr_07": 27.432432432432435,
+  "confusion_matrix": [
+    [
+      865,
+      150
+    ],
+    [
+      42,
+      943
+    ]
+  ],
+  "ablation": "no_occupancy_head",
+  "comparison": {
+    "full_mae_auc": 0.9602,
+    "delta": 0.0007
+  }
+}
