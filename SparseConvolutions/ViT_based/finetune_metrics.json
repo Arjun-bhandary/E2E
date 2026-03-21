@@ -1,0 +1,18 @@
+{
+  "architecture": "Sparse ViT v2 (6L, 256dim, 8heads, 1024tok)",
+  "best_epoch": 15,
+  "auc": 0.9426370933460028,
+  "accuracy": 0.878,
+  "f1": 0.8810916179337233,
+  "inv_fpr_07": 15.378787878787879,
+  "confusion_matrix": [
+    [
+      852,
+      163
+    ],
+    [
+      81,
+      904
+    ]
+  ]
+}
