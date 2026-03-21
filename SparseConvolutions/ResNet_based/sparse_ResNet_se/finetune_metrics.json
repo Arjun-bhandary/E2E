@@ -1,0 +1,35 @@
+{
+  "architecture": "Sparse ResNet-SE (3 blocks/stage, SE attention)",
+  "best_epoch": 6,
+  "auc": 0.9419989497636968,
+  "accuracy": 0.876,
+  "precision": 0.835304822565969,
+  "recall": 0.9319796954314721,
+  "f1": 0.8809980806142035,
+  "inv_fpr_07": 17.807017543859647,
+  "confusion_matrix": [
+    [
+      834,
+      181
+    ],
+    [
+      67,
+      918
+    ]
+  ],
+  "comparison": {
+    "baseline_sparse_resnet_auc": 0.9602,
+    "delta": -0.0182
+  },
+  "config": {
+    "seed": 42,
+    "batch_size": 64,
+    "lr_head": 0.001,
+    "lr_encoder": 5e-05,
+    "freeze_epochs": 5,
+    "weight_decay": 0.001,
+    "dropout": 0.5,
+    "mask_ratio_pretrain": 0.75,
+    "blocks_per_stage": 3
+  }
+}
