@@ -1,0 +1,22 @@
+{
+  "best_epoch": 12,
+  "auc": 0.940922707609212,
+  "accuracy": 0.8795,
+  "f1": 0.884633796074677,
+  "inv_fpr_07": 14.926470588235295,
+  "confusion_matrix": [
+    [
+      835,
+      180
+    ],
+    [
+      61,
+      924
+    ]
+  ],
+  "architecture": "dense_resnet18_sparse_autoencoder",
+  "comparison": {
+    "baseline_mae_auc": 0.9602,
+    "delta": -0.0193
+  }
+}
