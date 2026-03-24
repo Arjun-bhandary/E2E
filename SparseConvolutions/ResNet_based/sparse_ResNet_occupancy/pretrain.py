@@ -15,13 +15,13 @@ class Config:
     self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     self.batch_size = 32
     self.epochs = 30
-    self.lr = 1e-3
+    self.lr = 1e-2
     self.weight_decay = 1e-4
     self.masking_ratio = 0.75
     self.occ_weight = 0.5
     self.val_split = 0.2
     self.patience = 7
-    self.spatial_size = [128,128]
+    self.spatial_size = [125,125]
     self.input_channel = 8
     self.enc_dim = 512
     self.dec_dim = 256
@@ -127,7 +127,7 @@ def collate_fn(batch, mask_ratio=config.masking_ratio, threshold=0.0):
         'batch_size':  len(batch),
     }
 
-#resnet block with skip connections (channel dims are changed using 1x1 conv)
+# Resnet block with skip connections (channel dims are changed using 1x1 conv)
 class SparseResBlock(nn.Module):
     def __init__(self, in_ch, out_ch, indice_key=None):
         super().__init__()
@@ -150,7 +150,7 @@ class SparseResBlock(nn.Module):
         if self.skip: identity = self.skip(identity)
         return out.replace_feature(out.features + identity.features)
 
-#using sparseConv2D for downsampling
+#Using sparseConv2D for downsampling
 class SparseDownsample(nn.Module):
     def __init__(self, in_ch, out_ch, indice_key=None):
         super().__init__()
