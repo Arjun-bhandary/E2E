@@ -1,14 +1,3 @@
-#!/usr/bin/env python3
-"""
-finetune_sparse_ae.py — Sparse Autoencoder Fine-tuning
-=======================================================
-Loads encoder pretrained with the Sparse Autoencoder (L1+KL sparsity).
-Fine-tunes for binary classification on labelled jet data.
-Same training protocol as the baseline MAE finetune for fair comparison.
-
-Usage:
-    CUDA_VISIBLE_DEVICES=4 python3 finetune_sparse_ae.py
-"""
 
 import os, json, time, random
 import numpy as np
@@ -21,9 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 import spconv.pytorch as spconv
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# CONFIG
-# ═══════════════════════════════════════════════════════════════════════════════
+# Configurations
 LABELED_PATH   = '/raid/home/dgx1736/Arush1/Dataset_Specific_labelled.h5'
 ENCODER_PATH = '/raid/home/dgx1736/Arush1/sparse_autoencoder/sparse_ae_encoder.pt'
 SAVE_DIR       = '/raid/home/dgx1736/Arush1/sparse_autoencoder'
@@ -60,9 +47,7 @@ print(f"Architecture: Sparse Autoencoder (L1+KL sparsity pretrained)")
 if torch.cuda.is_available(): print(f"GPU: {torch.cuda.get_device_name(0)}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 1. DATASET — identical lazy per-sample reader
-# ═══════════════════════════════════════════════════════════════════════════════
+# Dataset with lazy loader
 class LabelledSparseJetDataset(Dataset):
     def __init__(self, path, threshold=0.0):
         self.path, self.threshold = path, threshold
@@ -100,9 +85,7 @@ def collate_fn(batch):
     return torch.cat(cl), torch.cat(fl), torch.cat(ll)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 2. MODEL — same encoder, same classifier head
-# ═══════════════════════════════════════════════════════════════════════════════
+# Same Sparse ResNet encoder
 class SparseResBlock(nn.Module):
     def __init__(self, in_ch, out_ch, indice_key=None):
         super().__init__()
@@ -185,9 +168,8 @@ class SparseAEClassifier(nn.Module):
         print("  → Encoder UNFROZEN")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 3. METRICS + TRAIN/EVAL
-# ═══════════════════════════════════════════════════════════════════════════════
+# Metrics and training loop
+
 def compute_metrics(labels, probs):
     auc = roc_auc_score(labels, probs)
     fpr, tpr, th = roc_curve(labels, probs)
@@ -228,9 +210,7 @@ def evaluate_full(model, loader, criterion):
     return tot/len(loader), compute_metrics(al, ap), al, ap
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 4. PLOT SAVING
-# ═══════════════════════════════════════════════════════════════════════════════
+# Saving plots
 def save_roc_plot(fpr, tpr, auc_val, path):
     fig, ax = plt.subplots(figsize=(7, 7))
     ax.plot(fpr, tpr, 'b-', lw=2, label=f'AUC = {auc_val:.4f}')
@@ -285,9 +265,7 @@ def save_cm_plot(cm, path):
     plt.colorbar(im, ax=ax); plt.tight_layout(); plt.savefig(path, dpi=150); plt.close()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 5. MAIN
-# ═══════════════════════════════════════════════════════════════════════════════
+
 if __name__ == '__main__':
     t0 = time.time()
     dataset = LabelledSparseJetDataset(LABELED_PATH, THRESHOLD)
@@ -347,7 +325,7 @@ if __name__ == '__main__':
         if pat >= PATIENCE and epoch > FREEZE_EPOCHS:
             print(f"\nEarly stopping at epoch {epoch}"); break
 
-    # ── final eval ────────────────────────────────────────────────────────
+#   Final evaluation
     print("\n" + "=" * 50 + "\nFINAL EVALUATION (Sparse Autoencoder)\n" + "=" * 50)
     ckpt = torch.load(os.path.join(SAVE_DIR, 'finetuned_classifier.pt'), map_location=DEVICE, weights_only=False)
     model.load_state_dict(ckpt['model_state'])
