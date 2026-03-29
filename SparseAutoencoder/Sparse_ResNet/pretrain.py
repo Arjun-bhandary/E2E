@@ -1,20 +1,4 @@
-#!/usr/bin/env python3
-"""
-pretrain_sparse_ae.py — Sparse Autoencoder Pretraining
-=======================================================
-Alternative architecture for bonus task:
-  A standard autoencoder with L1 sparsity penalty on the latent
-  bottleneck, using sparse convolutions (spconv) for jet image data.
 
-Comparison:
-  Baseline = Sparse ResNet MAE (masked autoencoder)
-  This     = Sparse Autoencoder (L1-regularised bottleneck)
-
-Data loading is identical to the baseline code.
-
-Usage:
-    CUDA_VISIBLE_DEVICES=4 python3 pretrain_sparse_ae.py
-"""
 
 import os, json, time, random
 import numpy as np
@@ -25,9 +9,7 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 import spconv.pytorch as spconv
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# CONFIG
-# ═══════════════════════════════════════════════════════════════════════════════
+# Configurations 
 UNLABELED_PATH = '/raid/home/dgx1736/Arush1/Dataset_Specific_Unlabelled.h5'
 SAVE_DIR       = '/raid/home/dgx1736/Arush1/sparse_autoencoder'
 DEVICE         = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -46,7 +28,6 @@ NUM_WORKERS    = 0
 PATIENCE       = 10
 
 # Sparsity hyperparameters — with warmup schedule
-# Final values after warmup (moderate strength)
 SPARSITY_LAMBDA = 5e-4     # L1 penalty weight (final)
 SPARSITY_TARGET = 0.05     # target activation rate
 SPARSITY_KL_BETA = 5e-4    # KL divergence penalty weight (final)
@@ -69,9 +50,7 @@ print(f"Architecture: Sparse Autoencoder (L1 + KL sparsity on bottleneck)")
 if torch.cuda.is_available(): print(f"GPU: {torch.cuda.get_device_name(0)}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 1. DATASET — identical lazy per-sample reader
-# ═══════════════════════════════════════════════════════════════════════════════
+
 class UnlabelledSparseJetDataset(Dataset):
     def __init__(self, path, threshold=0.0):
         self.path, self.threshold = path, threshold
@@ -116,9 +95,7 @@ def ae_collate_fn(batch, threshold=THRESHOLD):
     }
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 2. MODEL — Sparse Autoencoder with sparsity-penalised bottleneck
-# ═══════════════════════════════════════════════════════════════════════════════
+
 class SparseResBlock(nn.Module):
     def __init__(self, in_ch, out_ch, indice_key=None):
         super().__init__()
@@ -297,9 +274,6 @@ class SparseAutoencoder(nn.Module):
                kl_loss.item() if torch.is_tensor(kl_loss) else kl_loss
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 3. TRAIN / EVAL
-# ═══════════════════════════════════════════════════════════════════════════════
 def train_one_epoch(model, loader, optimizer, epoch=1):
     model.train()
     tot, tot_r, tot_l1, tot_kl, n = 0, 0, 0, 0, 0
@@ -332,9 +306,7 @@ def evaluate(model, loader, epoch=1):
     return tot/max(n,1), tot_r/max(n,1), tot_l1/max(n,1), tot_kl/max(n,1)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 4. PLOTTING
-# ═══════════════════════════════════════════════════════════════════════════════
+
 def save_loss_plots(history, save_dir):
     epochs = [h['epoch'] for h in history]
 
@@ -370,9 +342,7 @@ def save_loss_plots(history, save_dir):
     print(f"Saved plots to {save_dir}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 5. MAIN
-# ═══════════════════════════════════════════════════════════════════════════════
+
 if __name__ == '__main__':
     t0 = time.time()
     dataset = UnlabelledSparseJetDataset(UNLABELED_PATH, THRESHOLD)
