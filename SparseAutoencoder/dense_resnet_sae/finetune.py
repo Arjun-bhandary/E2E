@@ -1,14 +1,4 @@
-#!/usr/bin/env python3
-"""
-finetune_dense_sae.py — Dense ResNet-18 SAE Fine-tuning
-=========================================================
-Loads ResNet-18 encoder pretrained with Sparse Autoencoder (L1+KL).
-Fine-tunes for binary classification on labelled jet data.
-Dense data loading (125×125×8 tensors directly).
 
-Usage:
-    CUDA_VISIBLE_DEVICES=4 python3 finetune_dense_sae.py
-"""
 
 import os, json, time, random
 import numpy as np
@@ -20,9 +10,7 @@ import torch, torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# CONFIG
-# ═══════════════════════════════════════════════════════════════════════════════
+# Configs
 LABELED_PATH   = '/raid/home/dgx1736/Arush1/Dataset_Specific_labelled.h5'
 ENCODER_PATH   = '/raid/home/dgx1736/Arush1/dense_resnet_sae/dense_sae_encoder.pt'
 SAVE_DIR       = '/raid/home/dgx1736/Arush1/dense_resnet_sae'
@@ -56,9 +44,7 @@ print(f"Architecture: Dense ResNet-18 SAE (L1+KL pretrained)")
 if torch.cuda.is_available(): print(f"GPU: {torch.cuda.get_device_name(0)}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 1. DATASET — dense 125×125×8
-# ═══════════════════════════════════════════════════════════════════════════════
+# Dataset with lazy loader
 class LabelledDenseJetDataset(Dataset):
     def __init__(self, path):
         self.path = path
@@ -82,9 +68,7 @@ class LabelledDenseJetDataset(Dataset):
         return x, y
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 2. MODEL — ResNet-18 encoder + classifier head
-# ═══════════════════════════════════════════════════════════════════════════════
+# ResNet-18 encoder + classifier head
 class ResBlock(nn.Module):
     def __init__(self, in_ch, out_ch, stride=1):
         super().__init__()
@@ -152,9 +136,7 @@ class DenseResNetClassifier(nn.Module):
         print("  → Encoder UNFROZEN")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 3. METRICS + TRAIN/EVAL
-# ═══════════════════════════════════════════════════════════════════════════════
+# metrics and train/eval
 def compute_metrics(labels, probs):
     auc = roc_auc_score(labels, probs)
     fpr, tpr, th = roc_curve(labels, probs)
@@ -199,9 +181,7 @@ def evaluate_full(model, loader, criterion):
     return tot/len(loader), compute_metrics(al, ap), al, ap
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 4. PLOT SAVING
-# ═══════════════════════════════════════════════════════════════════════════════
+# Saving plots
 def save_roc_plot(fpr, tpr, auc_val, path):
     fig, ax = plt.subplots(figsize=(7, 7))
     ax.plot(fpr, tpr, 'b-', lw=2, label=f'AUC = {auc_val:.4f}')
@@ -261,9 +241,6 @@ def save_cm_plot(cm, path):
     plt.colorbar(im, ax=ax); plt.tight_layout(); plt.savefig(path, dpi=150); plt.close()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 5. MAIN
-# ═══════════════════════════════════════════════════════════════════════════════
 if __name__ == '__main__':
     t0 = time.time()
     dataset = LabelledDenseJetDataset(LABELED_PATH)
