@@ -1,14 +1,3 @@
-#!/usr/bin/env python3
-"""
-pretrain_dense_sae.py — Dense ResNet-18 Sparse Autoencoder Pretraining
-=======================================================================
-Encoder: ResNet-18 (standard nn.Conv2d) on dense 125×125×8 input
-Decoder: Transposed conv mirror
-Sparsity: L1 + KL on bottleneck with warmup schedule
-
-Usage:
-    CUDA_VISIBLE_DEVICES=4 python3 pretrain_dense_sae.py
-"""
 
 import os, json, time, random
 import numpy as np
@@ -18,9 +7,7 @@ import torch, torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# CONFIG
-# ═══════════════════════════════════════════════════════════════════════════════
+# configs
 UNLABELED_PATH = '/raid/home/dgx1736/Arush1/Dataset_Specific_Unlabelled.h5'
 SAVE_DIR       = '/raid/home/dgx1736/Arush1/dense_resnet_sae'
 DEVICE         = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -59,9 +46,7 @@ print(f"Architecture: Dense ResNet-18 Sparse Autoencoder")
 if torch.cuda.is_available(): print(f"GPU: {torch.cuda.get_device_name(0)}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 1. DATASET — dense 125×125×8 tensors
-# ═══════════════════════════════════════════════════════════════════════════════
+# Dataset 
 class UnlabelledDenseJetDataset(Dataset):
     def __init__(self, path):
         self.path = path
@@ -81,9 +66,7 @@ class UnlabelledDenseJetDataset(Dataset):
         return torch.from_numpy(img).permute(2, 0, 1).float()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 2. MODEL — ResNet-18 Encoder + Decoder with sparsity
-# ═══════════════════════════════════════════════════════════════════════════════
+# ResNet-18 Encoder + Decoder with sparsity
 class ResBlock(nn.Module):
     """Standard ResNet basic block."""
     def __init__(self, in_ch, out_ch, stride=1):
@@ -246,9 +229,7 @@ class DenseResNetSAE(nn.Module):
                kl_loss.item() if torch.is_tensor(kl_loss) else kl_loss
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 3. TRAIN / EVAL
-# ═══════════════════════════════════════════════════════════════════════════════
+# train and eval
 def train_one_epoch(model, loader, optimizer, epoch=1):
     model.train()
     tot, tot_r, tot_l1, tot_kl, n = 0, 0, 0, 0, 0
@@ -274,9 +255,7 @@ def evaluate(model, loader, epoch=1):
     return tot/max(n,1), tot_r/max(n,1), tot_l1/max(n,1), tot_kl/max(n,1)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 4. PLOTTING
-# ═══════════════════════════════════════════════════════════════════════════════
+#plotting
 def save_loss_plots(history, save_dir):
     epochs = [h['epoch'] for h in history]
     wu = SPARSITY_WARMUP + 0.5
@@ -316,9 +295,7 @@ def save_loss_plots(history, save_dir):
     print(f"Saved plots to {save_dir}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 5. MAIN
-# ═══════════════════════════════════════════════════════════════════════════════
+
 if __name__ == '__main__':
     t0 = time.time()
     dataset = UnlabelledDenseJetDataset(UNLABELED_PATH)
