@@ -1,0 +1,101 @@
+[
+  {
+    "pruning_ratio": 0.0,
+    "actual_sparsity": 0.0,
+    "auc": 0.9609,
+    "accuracy": 0.9015,
+    "error": 0.0985,
+    "flops": 7214395520.0,
+    "gflops": 7.2144
+  },
+  {
+    "pruning_ratio": 0.1,
+    "actual_sparsity": 0.1,
+    "auc": 0.9609,
+    "accuracy": 0.9015,
+    "error": 0.0985,
+    "flops": 6493188735.102769,
+    "gflops": 6.4932
+  },
+  {
+    "pruning_ratio": 0.2,
+    "actual_sparsity": 0.1999,
+    "auc": 0.961,
+    "accuracy": 0.9025,
+    "error": 0.0975,
+    "flops": 5771982547.044264,
+    "gflops": 5.772
+  },
+  {
+    "pruning_ratio": 0.3,
+    "actual_sparsity": 0.2999,
+    "auc": 0.9611,
+    "accuracy": 0.903,
+    "error": 0.097,
+    "flops": 5050775762.147033,
+    "gflops": 5.0508
+  },
+  {
+    "pruning_ratio": 0.4,
+    "actual_sparsity": 0.3999,
+    "auc": 0.9607,
+    "accuracy": 0.8935,
+    "error": 0.1065,
+    "flops": 4329569574.088527,
+    "gflops": 4.3296
+  },
+  {
+    "pruning_ratio": 0.5,
+    "actual_sparsity": 0.4998,
+    "auc": 0.959,
+    "accuracy": 0.8835,
+    "error": 0.1165,
+    "flops": 3608362789.1912956,
+    "gflops": 3.6084
+  },
+  {
+    "pruning_ratio": 0.6,
+    "actual_sparsity": 0.5998,
+    "auc": 0.9552,
+    "accuracy": 0.845,
+    "error": 0.155,
+    "flops": 2887156004.294065,
+    "gflops": 2.8872
+  },
+  {
+    "pruning_ratio": 0.7,
+    "actual_sparsity": 0.6998,
+    "auc": 0.9362,
+    "accuracy": 0.6335,
+    "error": 0.3665,
+    "flops": 2165949816.235559,
+    "gflops": 2.1659
+  },
+  {
+    "pruning_ratio": 0.8,
+    "actual_sparsity": 0.7997,
+    "auc": 0.9035,
+    "accuracy": 0.5145,
+    "error": 0.4855,
+    "flops": 1444743031.3383284,
+    "gflops": 1.4447
+  },
+  {
+    "pruning_ratio": 0.9,
+    "actual_sparsity": 0.8997,
+    "auc": 0.7922,
+    "accuracy": 0.5075,
+    "error": 0.4925,
+    "flops": 723536843.2798225,
+    "gflops": 0.7235
+  },
+  {
+    "pruning_ratio": 0.95,
+    "actual_sparsity": 0.9497,
+    "auc": 0.3128,
+    "accuracy": 0.5075,
+    "error": 0.4925,
+    "flops": 362933450.83120626,
+    "gflops": 0.3629
+  }
+]
