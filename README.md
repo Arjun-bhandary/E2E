@@ -1,12 +1,10 @@
 # E2E Sparse Neural Networks for Jet Classification
 
-**GSoC 2025 — ML4SCI | CMS Experiment**
+**GSoC 2026 — ML4SCI
 
 Self-supervised pretraining with Masked Autoencoders (MAE) on sparse CMS detector images, followed by fine-tuning for quark vs. gluon jet classification.
 
 **Author:** Arjun Bhandary  
-**Organization:** ML4SCI  
-**Mentors:** Sergei Gleyzer, Emanuele Usai, Eric Reinhardt (University of Alabama)
 
 ---
 
