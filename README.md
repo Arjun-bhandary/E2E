@@ -1,8 +1,8 @@
 # E2E Sparse Neural Networks for Jet Classification
 
-**GSoC 2025 — ML4SCI**
+**GSoC 2026 — ML4SCI**
 
-Self-supervised pretraining with Masked Autoencoders (MAE) on sparse CMS detector images, followed by fine-tuning for quark vs. gluon jet classification.
+Self-supervised pretraining with Masked Autoencoders (MAE) on sparse detector images, followed by fine-tuning for binary jet classification.
 
 **Author:** Arjun Bhandary
 
@@ -10,7 +10,7 @@ Self-supervised pretraining with Masked Autoencoders (MAE) on sparse CMS detecto
 
 ## Problem
 
-Jet classification (quark vs. gluon) is a key task in high-energy physics. CMS detector data is naturally **sparse** — only ~5–10% of the 125×125×8 image pixels contain non-zero energy deposits. Standard dense CNNs waste computation on empty regions. This project explores whether **sparse convolutions** and **sparse transformers** can exploit that sparsity for faster, more efficient classification, using self-supervised pretraining on 60k unlabelled jets followed by fine-tuning on 10k labelled samples.
+Jet classification is a key task in high-energy physics. CMS detector data is naturally **sparse** — only ~5–10% of the 125×125×8 image pixels contain non-zero energy deposits. Standard dense CNNs waste computation on empty regions. This project explores whether **sparse convolutions** and **sparse transformers** can exploit that sparsity for faster, more efficient classification, using self-supervised pretraining on 60k unlabelled jets followed by fine-tuning on 10k labelled samples.
 
 <p align="center">
   <img src="assets/sparse_tensor_visualization.png" alt="Sparse Tensor Visualization — CMS jet image showing ~90-95% sparsity" width="700"/>
