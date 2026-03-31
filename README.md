@@ -57,15 +57,9 @@ The **Sparse ResNet with reconstruction-only MAE** achieves the best AUC of **0.
 </p>
 
 <p align="center">
-  <img src="assets/confusion_matrix_best_model.png" alt="Confusion Matrix — Sparse ResNet MAE" width="450"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/SparseConvolutions/ResNet_based/sparse_ResNet/confusion_matrix" alt="Confusion Matrix — Sparse ResNet MAE" width="450"/>
   <br/>
   <em>Confusion matrix on the validation set (Sparse ResNet MAE, reconstruction only).</em>
-</p>
-
-<p align="center">
-  <img src="assets/training_loss_curves.png" alt="Training Loss Curves" width="650"/>
-  <br/>
-  <em>Pretraining and fine-tuning loss curves for the best model.</em>
 </p>
 
 ## Repository Structure
