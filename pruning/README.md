@@ -80,7 +80,7 @@ The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative
 ### Sparse ResNet MAE (Best Model)
 
 <p align="center">
-  <img src="../assets/sparse_resnet_error_vs_flops.png" alt="Sparse ResNet MAE — Error vs FLOPS" width="650"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/pruning/sparse_resnet/sparse_resnet_error_vs_flops.png" alt="Sparse ResNet MAE — Error vs FLOPS" width="650"/>
   <br/>
   <em>Error (1 − Accuracy) vs. estimated GFLOPS for the Sparse ResNet MAE at various pruning ratios.</em>
 </p>
@@ -101,7 +101,7 @@ The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative
 ### Sparse ViT MAE
 
 <p align="center">
-  <img src="../assets/sparse_vit_error_vs_flops.png" alt="Sparse ViT MAE — Error vs FLOPS" width="650"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/pruning/sparse_resnet/sparse_vit_error_vs_flops.png" alt="Sparse ViT MAE — Error vs FLOPS" width="650"/>
   <br/>
   <em>Error vs. GFLOPS for the Sparse ViT MAE.</em>
 </p>
@@ -118,7 +118,7 @@ The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative
 ### Sparse Autoencoder (L1 + KL)
 
 <p align="center">
-  <img src="../assets/sparse_ae_error_vs_flops.png" alt="Sparse Autoencoder — Error vs FLOPS" width="650"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/pruning/sparse_resnet/sparse_ae_error_vs_flops.png" alt="Sparse Autoencoder — Error vs FLOPS" width="650"/>
   <br/>
   <em>Error vs. GFLOPS for the Sparse Autoencoder.</em>
 </p>
