@@ -1,14 +1,4 @@
-#!/usr/bin/env python3
-"""
-prune_sparse_resnet.py — Pruning & FLOPS Analysis for Sparse ResNet MAE
-=========================================================================
-Applies global unstructured magnitude pruning at various sparsity levels
-to the best-performing Sparse ResNet MAE classifier, evaluates classification
-performance, estimates FLOPS, and plots Error vs FLOPS.
 
-Usage:
-    python prune_sparse_resnet.py
-"""
 
 import os, json, copy, random
 import numpy as np
@@ -20,9 +10,7 @@ import torch.nn.utils.prune as prune
 from torch.utils.data import Dataset, DataLoader
 import spconv.pytorch as spconv
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# CONFIG
-# ═══════════════════════════════════════════════════════════════════════════════
+
 # Hardcoded Paths
 CHECKPOINT_PATH    = "/raid/home/dgx1736/Arush1/sparse_resnet_no_occupancy/finetuned_classifier.pt"
 DATA_PATH          = "/raid/home/dgx1736/Arush1/Dataset_Specific_labelled.h5"
