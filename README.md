@@ -151,19 +151,3 @@ Pruning is applied globally across all convolutional (`SubMConv2d`, `SparseConv2
 
 **FLOPS estimation** accounts for the dual sparsity in these models: sparse convolutions already operate only on active sites (not the full 125×125 grid), and pruning further reduces computation proportionally to the fraction of non-zero weights remaining. See [`pruning/README.md`](pruning/README.md) for detailed results, per-model Error vs. FLOPS plots, and the FLOPS estimation methodology.
 
-## Key Findings
-
-1. **Reconstruction-only MAE outperforms reconstruction + occupancy** — adding an occupancy prediction head during pretraining slightly hurts downstream classification (AUC 0.9566 vs. 0.9609), suggesting the model benefits from focusing entirely on feature reconstruction.
-
-2. **Sparse convolutions > Sparse transformers** on this dataset — the ViT variant (AUC 0.9426) underperforms the ResNet (AUC 0.9609), likely because the 125×125 spatial structure is well-suited to local convolutional operations.
-
-3. **SE-attention adds complexity without benefit** — Squeeze-and-Excitation blocks (AUC 0.9420) don't improve over the simpler ResNet, suggesting channel recalibration isn't critical for this particular feature space.
-
-4. **Traditional sparse autoencoders underperform MAE** — the L1 + KL regularized autoencoder (AUC 0.9341) falls behind masked autoencoding, confirming that masking-based pretext tasks learn more transferable representations.
-
-5. **Models are highly compressible via pruning** — global magnitude pruning up to ~50% weight sparsity causes negligible accuracy loss across all three architectures. The Sparse ResNet MAE maintains AUC > 0.95 even at 70% sparsity, demonstrating significant over-parameterization that can be exploited for deployment efficiency.
-
-
-## License
-
-This project was developed as part of Google Summer of Code 2025 with ML4SCI.
