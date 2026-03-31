@@ -144,7 +144,7 @@ After fine-tuning, we apply **global unstructured magnitude pruning** (`torch.nn
 Pruning is applied globally across all convolutional (`SubMConv2d`, `SparseConv2d`) and linear layers, ranking all weights by absolute magnitude and zeroing the smallest ones. The pruning masks are then made permanent (weights are actually set to zero, not just masked).
 
 <p align="center">
-  <img src="assets/error_vs_flops_all_models.png" alt="Error vs FLOPS — all pruned models" width="700"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/assests/combined_result.png" alt="Error vs FLOPS — all pruned models" width="700"/>
   <br/>
   <em>Error (1 − Accuracy) vs. estimated GFLOPS at different pruning ratios for all three models.</em>
 </p>
