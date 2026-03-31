@@ -85,19 +85,6 @@ The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative
   <em>Error (1 − Accuracy) vs. estimated GFLOPS for the Sparse ResNet MAE at various pruning ratios.</em>
 </p>
 
-<!-- PLACEHOLDER: Replace the table below with actual results from sparse_resnet_pruning_results.json once available -->
-
-| Pruning Ratio | Actual Sparsity | AUC | Accuracy | Error | GFLOPS |
-|:-------------:|:---------------:|:---:|:--------:|:-----:|:------:|
-| 0% | — | 0.9609 | 0.904 | 0.096 | *baseline* |
-| 30% | ~0.30 | — | — | — | — |
-| 50% | ~0.50 | — | — | — | — |
-| 70% | ~0.70 | — | — | — | — |
-| 90% | ~0.90 | — | — | — | — |
-| 95% | ~0.95 | — | — | — | — |
-
-*Fill in from `sparse_resnet/sparse_resnet_pruning_results.json` after running.*
-
 ### Sparse ViT MAE
 
 <p align="center">
@@ -106,14 +93,6 @@ The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative
   <em>Error vs. GFLOPS for the Sparse ViT MAE.</em>
 </p>
 
-| Pruning Ratio | AUC | Accuracy | Error | GFLOPS |
-|:-------------:|:---:|:--------:|:-----:|:------:|
-| 0% | 0.9426 | 0.878 | 0.122 | *baseline* |
-| 50% | — | — | — | — |
-| 90% | — | — | — | — |
-| 95% | — | — | — | — |
-
-*Fill in from `sparse_vit/` results after running.*
 
 ### Sparse Autoencoder (L1 + KL)
 
@@ -123,14 +102,6 @@ The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative
   <em>Error vs. GFLOPS for the Sparse Autoencoder.</em>
 </p>
 
-| Pruning Ratio | AUC | Accuracy | Error | GFLOPS |
-|:-------------:|:---:|:--------:|:-----:|:------:|
-| 0% | 0.9341 | 0.869 | 0.131 | *baseline* |
-| 50% | — | — | — | — |
-| 90% | — | — | — | — |
-| 95% | — | — | — | — |
-
-*Fill in from `sparse_ae/` results after running.*
 
 ---
 
@@ -141,18 +112,6 @@ The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative
   <br/>
   <em>Error vs. GFLOPS for all three models across pruning ratios. The Sparse ResNet MAE dominates — lower error at any given FLOPS budget.</em>
 </p>
-
----
-
-## Key Observations
-
-1. **High tolerance to pruning** — all three models maintain near-baseline accuracy up to ~50% weight sparsity, indicating significant over-parameterization in the learned sparse convolution filters.
-
-2. **Graceful degradation** — performance degrades smoothly rather than collapsing, with the sharpest drops typically occurring between 80–95% sparsity. This makes it possible to choose an operating point that balances accuracy and efficiency.
-
-3. **Double sparsity advantage** — these models benefit from both spatial sparsity (sparse convolutions on ~10% active pixels) and weight sparsity (pruning). The combination means a 50%-pruned sparse model uses roughly **~20×** fewer FLOPS than a dense unpruned equivalent.
-
-4. **No retraining** — all results are from one-shot pruning without fine-tuning. Performance could likely be improved further with iterative pruning + retraining cycles (lottery ticket style), which is a direction for future work.
 
 ---
 
