@@ -22,9 +22,42 @@ All models follow a two-phase pipeline:
 
 75% of active jet tokens are masked. The encoder processes the visible 25%, the decoder reconstructs the masked tokens, and the model learns rich representations without labels.
 
-<p align="center">
-  <img src="assets/pretraining_mae_pipeline.png" alt="Pretraining Pipeline" width="850"/>
-</p>
+flowchart LR
+    subgraph INPUT["🔹 Input"]
+        A["Sparse Jet Image\n125×125×8\n~1500 active pixels"]
+    end
+
+    subgraph MASK["🎭 Masking (75%)"]
+        B["Active Tokens\nN ≈ 1500"]
+        C["Visible 25%\n~375 tokens"]
+        D["Masked 75%\n~1125 tokens"]
+        B --> C
+        B --> D
+    end
+
+    subgraph ENCODER["🔷 Sparse ResNet Encoder"]
+        E["4-Stage Encoder\n8→64→128→256→512\nSubMConv2d + SparseConv2d"]
+    end
+
+    subgraph DECODER["🔶 Decoder"]
+        F["Mirror Encoder\nSparseInverseConv2d\n512→256→128→64→8"]
+    end
+
+    subgraph LOSS["📉 Loss"]
+        G["MSE on Masked\nTokens Only"]
+    end
+
+    A --> B
+    C --> E
+    E --> F
+    F --> G
+    D -.->|"target"| G
+
+    style INPUT fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
+    style MASK fill:#1e293b,stroke:#f59e0b,color:#e2e8f0
+    style ENCODER fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+    style DECODER fill:#3b1f0b,stroke:#f59e0b,color:#e2e8f0
+    style LOSS fill:#1a2e1a,stroke:#22c55e,color:#e2e8f0
 
 ### Phase 2 — Supervised Fine-Tuning
 
