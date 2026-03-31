@@ -1,283 +1,148 @@
-# Mermaid Diagrams for E2E Repo
-# Copy each ```mermaid block into the appropriate README
+# E2E Sparse Neural Networks for Jet Classification
+
+**GSoC 2026 — ML4SCI**
+
+Self-supervised pretraining with Masked Autoencoders (MAE) on sparse detector images, followed by fine-tuning for binary jet classification.
+
+Model weights can be found **[over here](https://drive.google.com/drive/folders/13v5zoMDYELE-nXy_75cjRdWXq8gyy9Vn?usp=sharing)**.
+
+**Author:** Arjun Bhandary
 
 ---
 
-## 1. MAE Pretraining Pipeline (Main README)
+## Problem
 
-```mermaid
-flowchart LR
-    subgraph INPUT["🔹 Input"]
-        A["Sparse Jet Image\n125×125×8\n~1500 active pixels"]
-    end
+Jet classification is a key task in high-energy physics. CMS detector data is naturally **sparse** — only ~5–10% of the 125×125×8 image pixels contain non-zero energy deposits. Standard dense CNNs waste computation on empty regions. This project explores whether **sparse convolutions** and **sparse transformers** can exploit that sparsity for faster, more efficient classification, using self-supervised pretraining on 60k unlabelled jets followed by fine-tuning on 10k labelled samples.
 
-    subgraph MASK["🎭 Masking (75%)"]
-        B["Active Tokens\nN ≈ 1500"]
-        C["Visible 25%\n~375 tokens"]
-        D["Masked 75%\n~1125 tokens"]
-        B --> C
-        B --> D
-    end
+## Approach
 
-    subgraph ENCODER["🔷 Sparse ResNet Encoder"]
-        E["4-Stage Encoder\n8→64→128→256→512\nSubMConv2d + SparseConv2d"]
-    end
+All models follow a two-phase pipeline:
 
-    subgraph DECODER["🔶 Decoder"]
-        F["Mirror Encoder\nSparseInverseConv2d\n512→256→128→64→8"]
-    end
+### Phase 1 — Self-Supervised Pretraining (MAE)
 
-    subgraph LOSS["📉 Loss"]
-        G["MSE on Masked\nTokens Only"]
-    end
+75% of active jet tokens are masked. The encoder processes the visible 25%, the decoder reconstructs the masked tokens, and the model learns rich representations without labels.
 
-    A --> B
-    C --> E
-    E --> F
-    F --> G
-    D -.->|"target"| G
+<p align="center">
+  <img src="assets/pretraining_mae_pipeline.png" alt="Pretraining Pipeline" width="850"/>
+</p>
 
-    style INPUT fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
-    style MASK fill:#1e293b,stroke:#f59e0b,color:#e2e8f0
-    style ENCODER fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-    style DECODER fill:#3b1f0b,stroke:#f59e0b,color:#e2e8f0
-    style LOSS fill:#1a2e1a,stroke:#22c55e,color:#e2e8f0
+### Phase 2 — Supervised Fine-Tuning
+
+The pretrained encoder is frozen for 5 epochs (head-only training), then unfrozen for end-to-end fine-tuning with differential learning rates.
+
+<p align="center">
+  <img src="assets/finetuning_pipeline.png" alt="Fine-tuning Pipeline" width="850"/>
+</p>
+
+## Results
+
+| Model | AUC | Accuracy | F1 | 1/FPR @ TPR=0.7 | Best Epoch |
+|:------|:---:|:--------:|:--:|:----------------:|:----------:|
+| **Sparse ResNet MAE (recon only)** | **0.9609** | **0.904** | **0.908** | **27.4** | 9 |
+| Sparse ResNet MAE (recon + occupancy) | 0.9566 | 0.890 | 0.894 | 22.6 | 9 |
+| Sparse ViT MAE | 0.9426 | 0.878 | 0.881 | 15.4 | 15 |
+| Sparse ResNet-SE MAE | 0.9420 | 0.876 | 0.881 | 17.8 | 6 |
+| Sparse Autoencoder (L1 + KL) | 0.9341 | 0.869 | 0.871 | 14.1 | 20 |
+
+The **Sparse ResNet with reconstruction-only MAE** achieves the best AUC of **0.9609**, outperforming all other variants including the occupancy-augmented model, the ViT, and the traditional sparse autoencoder.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/SparseConvolutions/ResNet_based/sparse_ResNet/roc_curve.jpg" alt="ROC Curve — Sparse ResNet MAE (best model, AUC = 0.9609)" width="550"/>
+  <br/>
+  <em>ROC curve for the best model (Sparse ResNet MAE, reconstruction only). AUC = 0.9609.</em>
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/SparseConvolutions/ResNet_based/sparse_ResNet/confusion_matrix.jpg" alt="Confusion Matrix — Sparse ResNet MAE" width="450"/>
+  <br/>
+  <em>Confusion matrix on the validation set (Sparse ResNet MAE, reconstruction only).</em>
+</p>
+
+## Repository Structure
+
+```
+E2E/
+├── EDA.ipynb                          # Exploratory data analysis
+├── SparseConvolutions/
+│   ├── ResNet_based/
+│   │   ├── sparse_ResNet/             # Best model — ResNet MAE (recon only)
+│   │   ├── sparse_ResNet_occupancy/   # ResNet MAE (recon + occupancy head)
+│   │   └── sparse_ResNet_se/          # ResNet with squeeze-and-excitation
+│   ├── ViT_based/                     # Sparse Vision Transformer MAE
+│   └── SparseAutoencoder/             # Hybrid sparse autoencoder variant
+├── SparseAutoencoder/
+│   ├── Sparse_ResNet/                 # Sparse autoencoder with L1 + KL
+│   └── dense_resnet_sae/              # Dense baseline autoencoder
+├── pruning/
+│   ├── sparse_resnet/                 # Pruning analysis — Sparse ResNet MAE
+│   ├── sparse_vit/                    # Pruning analysis — Sparse ViT MAE
+│   └── sparse_ae/                     # Pruning analysis — Sparse Autoencoder
+├── assets/                            # Architecture diagrams and result plots
+├── requirements.txt
+└── install.sh
 ```
 
----
+Each experiment directory contains `pretrain.py`, `finetune.py`, training history JSONs, and metric plots (loss curves, ROC curves, confusion matrices).
 
-## 2. Fine-tuning Pipeline (Main README)
+See the sub-directory READMEs for detailed architecture descriptions:
+- [`SparseConvolutions/README.md`](SparseConvolutions/README.md) — Sparse convolution models (ResNet, ResNet-SE, ViT)
+- [`SparseAutoencoder/README.md`](SparseAutoencoder/README.md) — Sparse autoencoder models (L1 + KL regularization)
+- [`pruning/README.md`](pruning/README.md) — Post-training pruning analysis and Error vs. FLOPS trade-offs
 
-```mermaid
-flowchart LR
-    subgraph INPUT["🔹 Input"]
-        A["Sparse Jet Image\n125×125×8"]
-    end
+## Dataset
 
-    subgraph PHASE1["❄️ Phase 1 — Frozen (Epochs 1-5)"]
-        B["Pretrained Encoder\n🔒 Frozen\nlr = 0"]
-    end
+| Split | Samples | Labels |
+|:------|:-------:|:------:|
+| Unlabelled (pretraining) | 60,000 | — |
+| Labelled (fine-tuning) | 10,000 | Quark (0) / Gluon (1) |
 
-    subgraph HEAD["🟢 Classification Head"]
-        C["GAP → Dense 512→256→64→1\nlr = 1e-3\nDropout 0.5"]
-    end
+Each sample is a **125 × 125 × 8** image from simulated pp collisions in the CMS detector. The 8 channels represent different detector sub-systems (ECAL, HCAL, tracks, etc.). Typical sparsity is ~90–95% (most pixels are zero).
 
-    subgraph PHASE2["🔥 Phase 2 — Unfrozen (Epochs 6+)"]
-        D["Full Model\n🔓 Encoder lr = 5e-5\n🟢 Head lr = 1e-3"]
-    end
+## Compute Infrastructure
 
-    subgraph OUT["📊 Output"]
-        E["Quark vs Gluon\nBCEWithLogitsLoss"]
-    end
+All experiments were run on a shared local DGX-1 server accessed via SSH.
 
-    A --> B --> C --> E
-    A -.->|"after epoch 5"| D --> E
+| Resource | Details |
+|:---------|:--------|
+| **GPU** | NVIDIA Tesla V100-SXM2 — 32 GB HBM2, 5120 CUDA cores, 640 Tensor Cores |
+| **Server** | DGX-1 (8× V100-SXM2-32GB, NVLink interconnect) |
+| **CUDA Version** | 12.0 |
+| **Driver** | NVIDIA 525.60.13 |
+| **PyTorch** | 2.1.0+cu121 |
+| **Sparse Backend** | spconv-cu120 v2.3.6 |
 
-    style INPUT fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
-    style PHASE1 fill:#1e293b,stroke:#60a5fa,color:#93c5fd
-    style HEAD fill:#1a2e1a,stroke:#22c55e,color:#e2e8f0
-    style PHASE2 fill:#3b1f0b,stroke:#f59e0b,color:#e2e8f0
-    style OUT fill:#1e293b,stroke:#a78bfa,color:#e2e8f0
+### Why spconv instead of MinkowskiEngine?
+
+[MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) is a popular sparse convolution library, but its pre-built pip wheels are compiled for **CUDA ≤ 11.x** (10.2, 11.1, 11.3). The project has not been actively maintained since 2023 ([see issues](https://github.com/NVIDIA/MinkowskiEngine/issues/543)).Hence I could not use MinkowskiEngine on:
+
+- **Our local server** — CUDA 12.0 (driver 525.60.13)
+- **Kaggle notebooks** — CUDA 12.1+
+
+[spconv](https://github.com/traveller59/spconv) (v2.x) provides equivalent sparse convolution primitives (`SubMConv2d`, `SparseConv2d`, `SparseInverseConv2d`) with pre-built wheels for CUDA 12.0 (`spconv-cu120`), active maintenance, and tensor core support. All models in this repository use spconv as the sparse convolution backend.
+
+## Setup
+
+```bash
+# Clone
+git clone https://github.com/Arjun-bhandary/E2E.git
+cd E2E
+
+# Install (requires CUDA 12.x, Python 3.10+)
+bash install.sh
 ```
 
----
+The install script sets up PyTorch 2.1.0 (CUDA 12.1), spconv-cu120, and all other dependencies. See `requirements.txt` for the full list.
 
-## 3. Sparse Tensor Data Structure (SparseConvolutions README)
+## Post-Training Pruning
 
-```mermaid
-flowchart TD
-    subgraph DENSE["Dense Image (125×125×8)"]
-        A["15,625 pixels × 8 channels\n~90-95% are zero"]
-    end
+After fine-tuning, we apply **global unstructured magnitude pruning** (`torch.nn.utils.prune.L1Unstructured`) to three models — Sparse ResNet MAE, Sparse ViT MAE, and Sparse Autoencoder — at 11 sparsity levels (0% to 95%). This measures how much each model can be compressed before classification quality degrades, and how FLOPS scale with weight sparsity.
 
-    subgraph EXTRACT["Extract Non-Zero"]
-        B["Find active pixels\nwhere sum(channels) > 0"]
-    end
+Pruning is applied globally across all convolutional (`SubMConv2d`, `SparseConv2d`) and linear layers, ranking all weights by absolute magnitude and zeroing the smallest ones. The pruning masks are then made permanent (weights are actually set to zero, not just masked).
 
-    subgraph SPARSE["spconv.SparseConvTensor"]
-        C["indices: N×2\n(row, col) of active pixels"]
-        D["features: N×8\n8-channel values"]
-        E["spatial_shape: (125, 125)"]
-        F["batch_size: B"]
-    end
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/assests/combined_result.png" alt="Error vs FLOPS — all pruned models" width="700"/>
+  <br/>
+  <em>Error (1 − Accuracy) vs. estimated GFLOPS at different pruning ratios for all three models.</em>
+</p>
 
-    DENSE --> EXTRACT
-    EXTRACT --> C
-    EXTRACT --> D
-    C --> SPARSE
-    D --> SPARSE
-    E --> SPARSE
-    F --> SPARSE
-
-    style DENSE fill:#1e293b,stroke:#ef4444,color:#e2e8f0
-    style EXTRACT fill:#1e293b,stroke:#f59e0b,color:#e2e8f0
-    style SPARSE fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-```
-
----
-
-## 4. Sparse Convolution Primitives (SparseConvolutions README)
-
-```mermaid
-flowchart LR
-    subgraph SUB["SubMConv2d"]
-        direction TB
-        S1["Input sparse tensor"]
-        S2["3×3 conv at active sites ONLY"]
-        S3["Output: same sparsity pattern"]
-        S1 --> S2 --> S3
-    end
-
-    subgraph STRIDED["SparseConv2d (stride=2)"]
-        direction TB
-        T1["Input sparse tensor"]
-        T2["3×3 conv, stride 2"]
-        T3["Output: new sparsity pattern\nspatial dims halved"]
-        T1 --> T2 --> T3
-    end
-
-    subgraph INVERSE["SparseInverseConv2d"]
-        direction TB
-        U1["Latent sparse tensor"]
-        U2["Reuse cached index maps"]
-        U3["Output: original resolution\nrestored"]
-        U1 --> U2 --> U3
-    end
-
-    style SUB fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-    style STRIDED fill:#3b1f0b,stroke:#f59e0b,color:#e2e8f0
-    style INVERSE fill:#1a2e1a,stroke:#22c55e,color:#e2e8f0
-```
-
----
-
-## 5. SparseResBlock (SparseConvolutions README)
-
-```mermaid
-flowchart TD
-    IN["Input\n(C_in channels)"] --> BN1["BatchNorm1d"] --> RELU1["ReLU"]
-    RELU1 --> CONV1["SubMConv2d\nC_in → C_out, 3×3"]
-    CONV1 --> BN2["BatchNorm1d"] --> RELU2["ReLU"]
-    RELU2 --> CONV2["SubMConv2d\nC_out → C_out, 3×3"]
-    CONV2 --> ADD["➕ Add"]
-
-    IN -->|"skip connection\n(1×1 SubMConv2d\nif C_in ≠ C_out)"| SKIP["1×1 Conv / Identity"]
-    SKIP --> ADD
-
-    ADD --> RELU3["ReLU"] --> OUT["Output\n(C_out channels)"]
-
-    style IN fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
-    style CONV1 fill:#1e3a5f,stroke:#60a5fa,color:#e2e8f0
-    style CONV2 fill:#1e3a5f,stroke:#60a5fa,color:#e2e8f0
-    style SKIP fill:#3b1f0b,stroke:#f59e0b,color:#fcd34d
-    style ADD fill:#1a2e1a,stroke:#22c55e,color:#e2e8f0
-    style OUT fill:#1e293b,stroke:#a78bfa,color:#e2e8f0
-    style BN1 fill:#1e293b,stroke:#64748b,color:#e2e8f0
-    style BN2 fill:#1e293b,stroke:#64748b,color:#e2e8f0
-    style RELU1 fill:#1e293b,stroke:#64748b,color:#e2e8f0
-    style RELU2 fill:#1e293b,stroke:#64748b,color:#e2e8f0
-    style RELU3 fill:#1e293b,stroke:#64748b,color:#e2e8f0
-```
-
----
-
-## 6. Full Sparse ResNet Encoder (SparseConvolutions README)
-
-```mermaid
-flowchart TD
-    IN["Input\nSparseConvTensor\nN×8, 125×125"] --> STEM["Stem\nSubMConv2d 8→64\nBN + ReLU"]
-
-    STEM --> S1["Stage 1\n2× SparseResBlock\n64 → 64"]
-    S1 --> D1["⬇ SparseConv2d\n64→128, stride 2\n→ 63×63"]
-
-    D1 --> S2["Stage 2\n2× SparseResBlock\n128 → 128"]
-    S2 --> D2["⬇ SparseConv2d\n128→256, stride 2\n→ 32×32"]
-
-    D2 --> S3["Stage 3\n2× SparseResBlock\n256 → 256"]
-    S3 --> D3["⬇ SparseConv2d\n256→512, stride 2\n→ 16×16"]
-
-    D3 --> S4["Stage 4\n2× SparseResBlock\n512 → 512"]
-
-    S4 --> OUT["Latent Features\nN'×512, 16×16"]
-
-    style IN fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
-    style STEM fill:#1e3a5f,stroke:#60a5fa,color:#e2e8f0
-    style S1 fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-    style S2 fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-    style S3 fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-    style S4 fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-    style D1 fill:#3b1f0b,stroke:#f59e0b,color:#fcd34d
-    style D2 fill:#3b1f0b,stroke:#f59e0b,color:#fcd34d
-    style D3 fill:#3b1f0b,stroke:#f59e0b,color:#fcd34d
-    style OUT fill:#1a2e1a,stroke:#22c55e,color:#e2e8f0
-```
-
----
-
-## 7. Sparse Autoencoder Pipeline (SparseAutoencoder README)
-
-```mermaid
-flowchart LR
-    subgraph INPUT["🔹 Input"]
-        A["Full Sparse Jet\n125×125×8\nNO masking"]
-    end
-
-    subgraph ENCODER["🔷 Sparse ResNet Encoder"]
-        B["4-Stage Encoder\n8→64→128→256→512"]
-    end
-
-    subgraph LATENT["📌 Latent z"]
-        C["Sparse features\nN'×512"]
-        D["L1 penalty: λ₁·‖z‖₁\nKL penalty: λ_KL·KL(ρ‖ρ̂)"]
-    end
-
-    subgraph DECODER["🔶 Decoder"]
-        E["Mirror Encoder\nSparseInverseConv2d\n512→...→8"]
-    end
-
-    subgraph LOSS["📉 Total Loss"]
-        F["L_recon (MSE)\n+ λ₁·‖z‖₁\n+ λ_KL·KL(ρ‖ρ̂)"]
-    end
-
-    A --> B --> C
-    C --> D
-    C --> E --> F
-    A -.->|"reconstruction\ntarget"| F
-
-    style INPUT fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
-    style ENCODER fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-    style LATENT fill:#2d1b4e,stroke:#a78bfa,color:#e2e8f0
-    style DECODER fill:#3b1f0b,stroke:#f59e0b,color:#e2e8f0
-    style LOSS fill:#1a2e1a,stroke:#22c55e,color:#e2e8f0
-```
-
----
-
-## 8. Pruning Methodology Flow (pruning README)
-
-```mermaid
-flowchart TD
-    A["Fine-tuned Model\n(Sparse ResNet / ViT / AE)"] --> B["Collect All Weights\nSubMConv2d + SparseConv2d\n+ Linear layers"]
-
-    B --> C["Global L1 Ranking\nSort all weights by |w|"]
-
-    C --> D["Zero Bottom P%\nP ∈ {0, 10, 20, ..., 90, 95}"]
-
-    D --> E["Make Permanent\nRemove mask,\nweights = 0"]
-
-    E --> F["Evaluate on Val Set\nAUC, Accuracy, Error"]
-
-    E --> G["Estimate FLOPS\nSpatial sparsity × Weight sparsity"]
-
-    F --> H["📊 Error vs FLOPS\nPlot"]
-    G --> H
-
-    style A fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
-    style B fill:#1e293b,stroke:#60a5fa,color:#e2e8f0
-    style C fill:#3b1f0b,stroke:#f59e0b,color:#fcd34d
-    style D fill:#3b1f0b,stroke:#ef4444,color:#fcd34d
-    style E fill:#1e293b,stroke:#64748b,color:#e2e8f0
-    style F fill:#1a2e1a,stroke:#22c55e,color:#e2e8f0
-    style G fill:#1a2e1a,stroke:#22c55e,color:#e2e8f0
-    style H fill:#2d1b4e,stroke:#a78bfa,color:#e2e8f0
-```
+**FLOPS estimation** accounts for the dual sparsity in these models: sparse convolutions already operate only on active sites (not the full 125×125 grid), and pruning further reduces computation proportionally to the fraction of non-zero weights remaining. See [`pruning/README.md`](pruning/README.md) for detailed results, per-model Error vs. FLOPS plots, and the FLOPS estimation methodology.
