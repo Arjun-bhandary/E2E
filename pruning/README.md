@@ -105,15 +105,6 @@ The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative
 
 ---
 
-## Combined Comparison
-
-<p align="center">
-  <img src="../assets/error_vs_flops_all_models.png" alt="Error vs FLOPS — All Models" width="700"/>
-  <br/>
-  <em>Error vs. GFLOPS for all three models across pruning ratios. The Sparse ResNet MAE dominates — lower error at any given FLOPS budget.</em>
-</p>
-
----
 
 ## File Structure
 
