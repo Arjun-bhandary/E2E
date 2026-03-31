@@ -22,7 +22,7 @@ All models follow a two-phase pipeline:
 
 75% of active jet tokens are masked. The encoder processes the visible 25%, the decoder reconstructs the masked tokens, and the model learns rich representations without labels.
 
-<p align="center">
+```mermaid
 flowchart LR
     subgraph INPUT["🔹 Input"]
         A["Sparse Jet Image\n125×125×8\n~1500 active pixels"]
@@ -59,7 +59,6 @@ flowchart LR
     style ENCODER fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
     style DECODER fill:#3b1f0b,stroke:#f59e0b,color:#e2e8f0
     style LOSS fill:#1a2e1a,stroke:#22c55e,color:#e2e8f0
-</p>
 
 ### Phase 2 — Supervised Fine-Tuning
 
