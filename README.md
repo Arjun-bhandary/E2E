@@ -14,12 +14,6 @@ Model weights can be found **[over here](https://drive.google.com/drive/folders/
 
 Jet classification is a key task in high-energy physics. CMS detector data is naturally **sparse** — only ~5–10% of the 125×125×8 image pixels contain non-zero energy deposits. Standard dense CNNs waste computation on empty regions. This project explores whether **sparse convolutions** and **sparse transformers** can exploit that sparsity for faster, more efficient classification, using self-supervised pretraining on 60k unlabelled jets followed by fine-tuning on 10k labelled samples.
 
-<p align="center">
-  <img src="assets/sparse_tensor_visualization.png" alt="Sparse Tensor Visualization — CMS jet image showing ~90-95% sparsity" width="700"/>
-  <br/>
-  <em>A CMS jet image as a sparse tensor: only the coloured pixels carry non-zero energy deposits across 8 detector channels. The vast majority of the 125×125 grid is empty.</em>
-</p>
-
 ## Approach
 
 All models follow a two-phase pipeline:
