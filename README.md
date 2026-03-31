@@ -4,6 +4,8 @@
 
 Self-supervised pretraining with Masked Autoencoders (MAE) on sparse detector images, followed by fine-tuning for binary jet classification.
 
+Model weights can be found **[over here](https://drive.google.com/drive/folders/13v5zoMDYELE-nXy_75cjRdWXq8gyy9Vn?usp=sharing)**.
+
 **Author:** Arjun Bhandary
 
 ---
