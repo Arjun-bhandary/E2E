@@ -51,8 +51,7 @@ The pretrained encoder is frozen for 5 epochs (head-only training), then unfroze
 The **Sparse ResNet with reconstruction-only MAE** achieves the best AUC of **0.9609**, outperforming all other variants including the occupancy-augmented model, the ViT, and the traditional sparse autoencoder.
 
 <p align="center">
-  <img src="[SparseConvolutions/ResNet_based/sparse_ResNet
-/roc_curve.jpg](https://github.com/Arjun-bhandary/E2E/blob/main/SparseConvolutions/ResNet_based/sparse_ResNet/roc_curve.jpg?raw=true)" alt="ROC Curve — Sparse ResNet MAE (best model, AUC = 0.9609)" width="550"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/SparseConvolutions/ResNet_based/sparse_ResNet/roc_curve.jpg" alt="ROC Curve — Sparse ResNet MAE (best model, AUC = 0.9609)" width="550"/>
   <br/>
   <em>ROC curve for the best model (Sparse ResNet MAE, reconstruction only). AUC = 0.9609.</em>
 </p>
