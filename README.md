@@ -104,7 +104,7 @@ Each sample is a **125 × 125 × 8** image from simulated pp collisions in the C
 
 ## Compute Infrastructure
 
-All experiments were run on a shared university DGX-1 server accessed via SSH.
+All experiments were run on a shared local DGX-1 server accessed via SSH.
 
 | Resource | Details |
 |:---------|:--------|
@@ -117,9 +117,9 @@ All experiments were run on a shared university DGX-1 server accessed via SSH.
 
 ### Why spconv instead of MinkowskiEngine?
 
-[MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) is a popular sparse convolution library, but its pre-built pip wheels are compiled for **CUDA ≤ 11.x** (10.2, 11.1, 11.3). Building from source on CUDA 12.x requires manual patches to the thrust/CUB API and specific GCC versions — the project has not been actively maintained since 2023 ([see issues](https://github.com/NVIDIA/MinkowskiEngine/issues/543)). This made MinkowskiEngine unusable on:
+[MinkowskiEngine](https://github.com/NVIDIA/MinkowskiEngine) is a popular sparse convolution library, but its pre-built pip wheels are compiled for **CUDA ≤ 11.x** (10.2, 11.1, 11.3). The project has not been actively maintained since 2023 ([see issues](https://github.com/NVIDIA/MinkowskiEngine/issues/543)).Hence I could not use MinkowskiEngine on:
 
-- **Our university server** — CUDA 12.0 (driver 525.60.13)
+- **Our local server** — CUDA 12.0 (driver 525.60.13)
 - **Kaggle notebooks** — CUDA 12.1+
 
 [spconv](https://github.com/traveller59/spconv) (v2.x) provides equivalent sparse convolution primitives (`SubMConv2d`, `SparseConv2d`, `SparseInverseConv2d`) with pre-built wheels for CUDA 12.0 (`spconv-cu120`), active maintenance, and tensor core support. All models in this repository use spconv as the sparse convolution backend.
