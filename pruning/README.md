@@ -68,19 +68,19 @@ Active sites decrease through downsampling: 125² → ~1500, 63² → ~900, 32²
 ### Sparse ResNet MAE (Best Model)
 
 <p align="center">
-  <img src="../assets/sparse_resnet_error_vs_flops.png" alt="Sparse ResNet — Error vs FLOPS" width="600"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/blob/main/pruning/sparse_resnet/sparse_resnet_error_vs_flops.png" alt="Sparse ResNet — Error vs FLOPS" width="600"/>
 </p>
 
 ### Sparse ViT MAE
 
 <p align="center">
-  <img src="../assets/sparse_vit_error_vs_flops.png" alt="Sparse ViT — Error vs FLOPS" width="600"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/blob/main/pruning/sparse_vit/sparse_vit_error_vs_flops.png" alt="Sparse ViT — Error vs FLOPS" width="600"/>
 </p>
 
 ### Sparse Autoencoder (L1 + KL)
 
 <p align="center">
-  <img src="../assets/sparse_ae_error_vs_flops.png" alt="Sparse AE — Error vs FLOPS" width="600"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/blob/main/pruning/sparse_ae/sparse_ae_error_vs_flops.png" alt="Sparse AE — Error vs FLOPS" width="600"/>
 </p>
 
 ### Combined Comparison
