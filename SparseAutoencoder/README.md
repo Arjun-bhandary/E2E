@@ -100,16 +100,6 @@ flowchart LR
 
 The L1 and KL losses are **orders of magnitude smaller** than reconstruction loss (~1e-6 vs. ~0.014), suggesting the regularization terms are too weak to meaningfully shape representations. Increasing `λ_L1` and `λ_KL` by 2–3 orders of magnitude could improve results.
 
-### Why MAE Outperforms
-
-| Aspect | MAE | Sparse Autoencoder |
-|:-------|:----|:-------------------|
-| **Information bottleneck** | Strong — only 25% visible | Weak — full input |
-| **Pretext difficulty** | Hard — infer missing structure | Easy — input ≈ output |
-| **Representation quality** | Contextual, predictive features | Identity-like mappings |
-| **Regularization** | Implicit (masking) | Explicit but undertuned |
-
----
 
 ## File Structure
 
