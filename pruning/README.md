@@ -66,29 +66,18 @@ Active sites decrease through downsampling: 125² → ~1500, 63² → ~900, 32²
 ## Results
 
 ### Sparse ResNet MAE (Best Model)
-
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/blob/main/pruning/sparse_resnet/sparse_resnet_error_vs_flops.png" alt="Sparse ResNet — Error vs FLOPS" width="600"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/pruning/sparse_resnet/sparse_resnet_error_vs_flops.png" alt="Sparse ResNet — Error vs FLOPS" width="600"/>
 </p>
 
 ### Sparse ViT MAE
-
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/blob/main/pruning/sparse_vit/sparse_vit_error_vs_flops.png" alt="Sparse ViT — Error vs FLOPS" width="600"/>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/pruning/sparse_vit/sparse_vit_error_vs_flops.png" alt="Sparse ViT — Error vs FLOPS" width="600"/>
 </p>
 
 ### Sparse Autoencoder (L1 + KL)
-
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/blob/main/pruning/sparse_ae/sparse_ae_error_vs_flops.png" alt="Sparse AE — Error vs FLOPS" width="600"/>
-</p>
-
-### Combined Comparison
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/assests/combined_result.png" alt="All Models — Error vs FLOPS" width="700"/>
-  <br/>
-  <em>Error (1 − Accuracy) vs. estimated GFLOPS across pruning ratios. Sparse ResNet MAE dominates at every FLOPS budget.</em>
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/pruning/sparse_ae/sparse_ae_error_vs_flops.png" alt="Sparse AE — Error vs FLOPS" width="600"/>
 </p>
 
 ---
