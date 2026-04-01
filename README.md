@@ -22,17 +22,11 @@ All models follow a two-phase pipeline:
 
 75% of active jet tokens are masked. The encoder processes the visible 25%, the decoder reconstructs the masked tokens, and the model learns rich representations without labels.
 
-<p align="center">
-  <img src="assets/pretraining_mae_pipeline.png" alt="Pretraining Pipeline" width="850"/>
-</p>
 
 ### Phase 2 — Supervised Fine-Tuning
 
 The pretrained encoder is frozen for 5 epochs (head-only training), then unfrozen for end-to-end fine-tuning with differential learning rates.
 
-<p align="center">
-  <img src="assets/finetuning_pipeline.png" alt="Fine-tuning Pipeline" width="850"/>
-</p>
 
 ## Results
 
