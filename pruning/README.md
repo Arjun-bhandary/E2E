@@ -1,24 +1,33 @@
 # Post-Training Pruning Analysis
 
-This directory contains pruning experiments for three fine-tuned models, measuring the trade-off between model compression (weight sparsity / FLOPS reduction) and classification performance.
+Pruning experiments for three fine-tuned models, measuring the trade-off between model compression and classification performance.
 
 ---
 
 ## Method
 
-We apply **global unstructured magnitude pruning** using PyTorch's `torch.nn.utils.prune.L1Unstructured`. All prunable weights across the entire model (sparse convolution layers + linear classifier layers) are pooled together, ranked by absolute magnitude, and the smallest weights are zeroed out.
+**Global unstructured magnitude pruning** via `torch.nn.utils.prune.L1Unstructured`. All prunable weights are pooled, ranked by |w|, and the smallest are zeroed out. No retraining after pruning.
 
-```
-Global L1 Unstructured Pruning
-──────────────────────────────
-1. Collect all weight tensors from SubMConv2d, SparseConv2d, and Linear layers
-2. Concatenate into a single vector, sort by |w|
-3. Zero out the bottom P% (the pruning ratio)
-4. Make permanent: remove mask, set weights to zero
-5. Evaluate on the validation set (2,000 samples)
-```
+```mermaid
+flowchart LR
+    A["Fine-tuned Model\nSparse ResNet / ViT / AE"] --> B["Collect All Weights\nSubMConv2d + SparseConv2d\n+ Linear layers"]
+    B --> C["Global L1 Ranking\nSort all weights by |w|"]
+    C --> D["Zero Bottom P%\nP ∈ 0,10,...,90,95"]
+    D --> E["Make Permanent\nRemove mask\nweights = 0"]
+    E --> F["Evaluate Val Set\nAUC, Accuracy, Error"]
+    E --> G["Estimate FLOPS\nSpatial × Weight\nsparsity"]
+    F --> H(("Error vs\nFLOPS"))
+    G --> H
 
-This is applied **post-training** — no retraining or fine-tuning is done after pruning. The goal is to characterize the inherent redundancy in each model architecture.
+    style A fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+    style B fill:#2a2a2a,stroke:#888,color:#ccc
+    style C fill:#4a3b1f,stroke:#b8960f,color:#fce8b2
+    style D fill:#4a2a2a,stroke:#8a4a4a,color:#f0c0c0
+    style E fill:#2a2a2a,stroke:#888,color:#ccc
+    style F fill:#2d4a2d,stroke:#4a7a4a,color:#d4edda
+    style G fill:#2d4a2d,stroke:#4a7a4a,color:#d4edda
+    style H fill:#3d2d4a,stroke:#a78bfa,color:#d8cce8
+```
 
 ### Sparsity Levels Tested
 
@@ -40,38 +49,17 @@ Pruning ratios: [0%, 10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90%, 95%]
 
 ## FLOPS Estimation
 
-FLOPS for sparse convolution models are estimated analytically, accounting for **two levels of sparsity**:
+FLOPS account for **two levels of sparsity**:
 
-### Level 1 — Spatial Sparsity (inherent to sparse convolutions)
+**Level 1 — Spatial sparsity** (inherent): sparse convolutions compute only at active sites (~1,500 of 15,625 pixels). Already ~10× cheaper than dense.
 
-Sparse convolutions only compute at **active sites** (non-zero pixels), not the full 125×125 grid. A typical jet has ~1,500 active pixels out of 15,625 total (~10% occupancy). This already gives a ~10× FLOPS reduction over dense convolutions.
-
-### Level 2 — Weight Sparsity (from pruning)
-
-After magnitude pruning, zeroed weights contribute no multiply-accumulate operations. FLOPS scale linearly with the density (fraction of non-zero weights):
+**Level 2 — Weight sparsity** (from pruning): zeroed weights skip computation. FLOPS scale linearly with density.
 
 ```
 FLOPS_layer = 2 × K² × C_in × C_out × N_active × (1 − sparsity)
-
-Where:
-  K         = kernel size (3 for most layers)
-  C_in      = input channels
-  C_out     = output channels
-  N_active  = number of active sites at this resolution
-  sparsity  = fraction of zero weights after pruning
 ```
 
-Active sites decrease through the encoder due to strided `SparseConv2d` downsampling:
-
-```
-Resolution    Active sites (approx.)
-125×125       ~1500  (N₀)
-63×63         ~900   (0.6 × N₀)
-32×32         ~450   (0.3 × N₀)
-16×16         ~180   (0.12 × N₀)
-```
-
-The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative to the encoder and scale the same way with weight pruning.
+Active sites decrease through downsampling: 125² → ~1500, 63² → ~900, 32² → ~450, 16² → ~180.
 
 ---
 
@@ -80,31 +68,42 @@ The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative
 ### Sparse ResNet MAE (Best Model)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/pruning/sparse_resnet/sparse_resnet_error_vs_flops.png" alt="Sparse ResNet MAE — Error vs FLOPS" width="650"/>
-  <br/>
-  <em>Error (1 − Accuracy) vs. estimated GFLOPS for the Sparse ResNet MAE at various pruning ratios.</em>
+  <img src="../assets/sparse_resnet_error_vs_flops.png" alt="Sparse ResNet — Error vs FLOPS" width="600"/>
 </p>
 
 ### Sparse ViT MAE
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/pruning/sparse_vit/sparse_vit_error_vs_flops.png" alt="Sparse ViT MAE — Error vs FLOPS" width="650"/>
-  <br/>
-  <em>Error vs. GFLOPS for the Sparse ViT MAE.</em>
+  <img src="../assets/sparse_vit_error_vs_flops.png" alt="Sparse ViT — Error vs FLOPS" width="600"/>
 </p>
-
 
 ### Sparse Autoencoder (L1 + KL)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/pruning/sparse_ae/sparse_ae_error_vs_flops.png" alt="Sparse Autoencoder — Error vs FLOPS" width="650"/>
-  <br/>
-  <em>Error vs. GFLOPS for the Sparse Autoencoder.</em>
+  <img src="../assets/sparse_ae_error_vs_flops.png" alt="Sparse AE — Error vs FLOPS" width="600"/>
 </p>
 
+### Combined Comparison
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Arjun-bhandary/E2E/main/assests/combined_result.png" alt="All Models — Error vs FLOPS" width="700"/>
+  <br/>
+  <em>Error (1 − Accuracy) vs. estimated GFLOPS across pruning ratios. Sparse ResNet MAE dominates at every FLOPS budget.</em>
+</p>
 
 ---
 
+## Key Observations
+
+1. **High tolerance to pruning** — all models maintain near-baseline accuracy up to ~50% weight sparsity.
+
+2. **Graceful degradation** — performance drops smoothly, sharpest between 80–95% sparsity.
+
+3. **Double sparsity** — spatial sparsity (sparse convs on ~10% active pixels) + weight sparsity (pruning) means a 50%-pruned model uses ~20× fewer FLOPS than a dense unpruned equivalent.
+
+4. **No retraining** — all results are one-shot pruning. Iterative pruning + retraining could improve further.
+
+---
 
 ## File Structure
 
@@ -112,7 +111,7 @@ The classifier head FLOPS (Linear layers: 512→256→64→1) are small relative
 pruning/
 ├── README.md
 ├── sparse_resnet/
-│   ├── prune_sparse_resnet.py           # Pruning script
+│   ├── prune_sparse_resnet.py
 │   ├── sparse_resnet_pruning_results.json
 │   └── sparse_resnet_error_vs_flops.png
 ├── sparse_vit/
@@ -125,15 +124,12 @@ pruning/
     └── sparse_ae_error_vs_flops.png
 ```
 
-Each script loads the fine-tuned checkpoint, applies pruning at all 11 sparsity levels, evaluates on the validation set, estimates FLOPS, and generates the Error vs. FLOPS plot.
-
 ### Running
 
 ```bash
-# From repo root
 python pruning/sparse_resnet/prune_sparse_resnet.py
 python pruning/sparse_vit/prune_sparse_vit.py
 python pruning/sparse_ae/prune_sparse_ae.py
 ```
 
-Requires a GPU and access to the fine-tuned checkpoints and dataset.
+Requires GPU and access to fine-tuned checkpoints + dataset.
