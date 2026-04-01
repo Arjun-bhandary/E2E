@@ -6,21 +6,25 @@ This directory explores an alternative to Masked Autoencoding: a traditional **s
 
 ## Approach
 
-Instead of masking tokens and reconstructing them (MAE), the sparse autoencoder:
+Instead of masking tokens and reconstructing them (MAE), the sparse autoencoder encodes the **full** jet image (no masking), decodes to reconstruct the original, and adds **L1 + KL** penalties on the latent activations.
 
-1. **Encodes the full jet image** (no masking) into a latent representation
-2. **Decodes** back to reconstruct the original
-3. Adds **L1 sparsity** and **KL divergence** penalties on the latent activations to encourage a sparse, distributed internal representation
+```mermaid
+flowchart LR
+    A["Full Sparse Jet\n125×125×8\nNO masking"] --> B["Sparse ResNet\nEncoder\n8→64→...→512"]
+    B --> C["Latent z\nN'×512"]
+    C --> D["Sparse Decoder\nSparseInverseConv\n512→...→8"]
+    D --> E(("L_total\nMSE + λ₁‖z‖₁\n+ λ_KL · KL(ρ‖ρ̂)"))
+    A -.->|"reconstruction target"| E
+    C -.->|"L1 + KL\npenalties"| E
 
-<p align="center">
-  <img src="../assets/sparse_autoencoder_pipeline.png" alt="Sparse Autoencoder Pipeline" width="800"/>
-  <br/>
-  <em>Sparse Autoencoder: the full input is encoded (no masking), reconstructed, and regularized with L1 + KL penalties on the latent activations.</em>
-</p>
+    style A fill:#2a2a2a,stroke:#888,color:#ccc
+    style B fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+    style C fill:#3d2d4a,stroke:#a78bfa,color:#d8cce8
+    style D fill:#4a3b1f,stroke:#b8960f,color:#fce8b2
+    style E fill:#4a2a2a,stroke:#8a4a4a,color:#f0c0c0
+```
 
 ### Loss Function
-
-The total pretraining loss combines three terms:
 
 ```
 L_total = L_recon (MSE) + λ_L1 · ||z||₁ + λ_KL · KL(ρ || ρ̂)
@@ -28,53 +32,32 @@ L_total = L_recon (MSE) + λ_L1 · ||z||₁ + λ_KL · KL(ρ || ρ̂)
 
 | Term | Purpose | Typical magnitude (epoch 1) |
 |:-----|:--------|:---------------------------:|
-| **L_recon (MSE)** | Faithful reconstruction of input features | ~0.014 |
-| **λ_L1 · ‖z‖₁** | Encourages sparse latent activations (few active units) | ~1e-6 |
-| **λ_KL · KL(ρ ‖ ρ̂)** | Pushes average activation ρ̂ toward target sparsity ρ | ~4e-6 |
+| **L_recon (MSE)** | Faithful reconstruction | ~0.014 |
+| **λ_L1 · ‖z‖₁** | Sparse latent activations | ~1e-6 |
+| **λ_KL · KL(ρ ‖ ρ̂)** | Push avg activation toward target ρ | ~4e-6 |
 
-Where **ρ** is a target sparsity level (e.g., 0.05 — meaning each latent unit should be active ~5% of the time) and **ρ̂** is the observed average activation of each latent unit across the batch.
+### MAE vs. Sparse Autoencoder
 
-### Architecture
+```mermaid
+flowchart LR
+    subgraph MAE["MAE (SparseConvolutions/)"]
+        M1["25% visible\n75% masked"] --> M2["Encoder"] --> M3["Decoder"] --> M4["MSE on\nmasked only"]
+    end
 
-The encoder and decoder use the **same Sparse ResNet architecture** as the convolution-based models (see [`SparseConvolutions/README.md`](../SparseConvolutions/README.md)), but the pretraining objective is different:
+    subgraph SAE["Sparse Autoencoder (this dir)"]
+        S1["100% visible\nno masking"] --> S2["Encoder"] --> S3["Decoder"] --> S4["MSE on all\n+ L1 + KL"]
+    end
 
-```
-                   MAE (SparseConvolutions/)          Sparse Autoencoder (this directory)
-                   ──────────────────────────         ────────────────────────────────────
-Input:             25% of active tokens (75% masked)  100% of active tokens (no masking)
-Pretext task:      Reconstruct masked tokens          Reconstruct all tokens
-Regularization:    None (implicit via masking)         L1 + KL on latent activations
-Loss:              MSE on masked positions only        MSE on all positions + L1 + KL
-```
-
-```
-Encoder (identical to Sparse ResNet encoder)
-┌─────────────────────────────────────────────────────────────────────┐
-│ Input: SparseConvTensor (N × 8, spatial 125×125)                    │
-│   ▼ SubMConv2d(8 → 64, 3×3) + BN + ReLU                            │
-│   ▼ Stage 1: 2× ResBlock(64)                                       │
-│   ▼ SparseConv2d(64 → 128, stride=2)   → 63×63                     │
-│   ▼ Stage 2: 2× ResBlock(128)                                      │
-│   ▼ SparseConv2d(128 → 256, stride=2)  → 32×32                     │
-│   ▼ Stage 3: 2× ResBlock(256)                                      │
-│   ▼ SparseConv2d(256 → 512, stride=2)  → 16×16                     │
-│   ▼ Stage 4: 2× ResBlock(512)                                      │
-│   ▼                                                                 │
-│   Latent z (N' × 512)  ← L1 and KL penalties applied here          │
-└─────────────────────────────────────────────────────────────────────┘
-
-Decoder (mirror of encoder using SparseInverseConv2d)
-┌─────────────────────────────────────────────────────────────────────┐
-│   ▼ SparseInverseConv2d(512 → 256)  → 32×32                        │
-│   ▼ 2× ResBlock(256)                                               │
-│   ▼ SparseInverseConv2d(256 → 128)  → 63×63                        │
-│   ▼ 2× ResBlock(128)                                               │
-│   ▼ SparseInverseConv2d(128 → 64)   → 125×125                      │
-│   ▼ 2× ResBlock(64)                                                │
-│   ▼ SubMConv2d(64 → 8, 1×1)                                        │
-│   ▼                                                                 │
-│   Reconstructed output (125×125 × 8)                                │
-└─────────────────────────────────────────────────────────────────────┘
+    style MAE fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+    style SAE fill:#3d2d4a,stroke:#a78bfa,color:#d8cce8
+    style M1 fill:#2a2a2a,stroke:#888,color:#ccc
+    style M2 fill:#2d4a2d,stroke:#4a7a4a,color:#d4edda
+    style M3 fill:#4a3b1f,stroke:#b8960f,color:#fce8b2
+    style M4 fill:#4a2a2a,stroke:#8a4a4a,color:#f0c0c0
+    style S1 fill:#2a2a2a,stroke:#888,color:#ccc
+    style S2 fill:#2d4a2d,stroke:#4a7a4a,color:#d4edda
+    style S3 fill:#4a3b1f,stroke:#b8960f,color:#fce8b2
+    style S4 fill:#4a2a2a,stroke:#8a4a4a,color:#f0c0c0
 ```
 
 ---
@@ -83,7 +66,7 @@ Decoder (mirror of encoder using SparseInverseConv2d)
 
 ### Sparse_ResNet/
 
-Uses the Sparse ResNet encoder pretrained with the autoencoder objective (L1 + KL) instead of MAE.
+Uses the same Sparse ResNet encoder as the convolution-based models, pretrained with the autoencoder objective (L1 + KL) instead of MAE.
 
 | Metric | Value |
 |:-------|:-----:|
@@ -92,52 +75,39 @@ Uses the Sparse ResNet encoder pretrained with the autoencoder objective (L1 + K
 | **F1** | 0.871 |
 | **1/FPR @ TPR=0.7** | 14.1 |
 
-This is the weakest-performing model in the comparison (**ΔAUC = −0.0268** vs. the best MAE model), suggesting that masking-based pretext tasks learn more transferable representations than reconstruction with sparsity regularization.
+This is the weakest-performing model (**ΔAUC = −0.0268** vs. the best MAE model), suggesting masking-based pretext tasks learn more transferable representations.
 
 ### dense_resnet_sae/
 
-A **dense (non-sparse) ResNet autoencoder** baseline for comparison. Uses standard `nn.Conv2d` instead of `spconv.SubMConv2d`, operating on the full 125×125×8 grid including zero pixels.
+A **dense (non-sparse) ResNet autoencoder** baseline. Uses standard `nn.Conv2d` instead of `spconv.SubMConv2d`, operating on the full 125×125×8 grid including zero pixels.
 
-```
-Dense Autoencoder (baseline)
-┌─────────────────────────────────────────────────────┐
-│ Input: Dense tensor (B × 8 × 125 × 125)             │
-│   ▼ nn.Conv2d(8 → 64, 3×3) + BN + ReLU              │
-│   ▼ Standard ResBlocks + MaxPool2d (stride=2)        │
-│   ▼ ...                                              │
-│   Latent → Decoder (ConvTranspose2d for upsampling)  │
-│   ▼ Reconstructed output (B × 8 × 125 × 125)        │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    A["Dense Input\nB×8×125×125\n(all 15,625 pixels)"] --> B["nn.Conv2d\nResBlocks\n+ MaxPool2d"]
+    B --> C["Latent"] --> D["ConvTranspose2d\nUpsampling"]
+    D --> E(("MSE + L1 + KL"))
 
-Key difference: processes ALL 15,625 pixels per sample,
-including the ~90% that are zero — wasting computation.
+    style A fill:#2a2a2a,stroke:#888,color:#ccc
+    style B fill:#4a3b1f,stroke:#b8960f,color:#fce8b2
+    style C fill:#3d2d4a,stroke:#a78bfa,color:#d8cce8
+    style D fill:#1e3a5f,stroke:#3b82f6,color:#e2e8f0
+    style E fill:#4a2a2a,stroke:#8a4a4a,color:#f0c0c0
 ```
 
 ---
 
 ## Key Observation
 
-The sparse autoencoder's L1 and KL losses are **orders of magnitude smaller** than the reconstruction loss:
+The L1 and KL losses are **orders of magnitude smaller** than reconstruction loss (~1e-6 vs. ~0.014), suggesting the regularization terms are too weak to meaningfully shape representations. Increasing `λ_L1` and `λ_KL` by 2–3 orders of magnitude could improve results.
 
-```
-Epoch 1 losses:
-  L_recon ≈ 0.014       (dominant)
-  L1      ≈ 0.000001    (negligible)
-  KL      ≈ 0.000004    (negligible)
-```
-
-This suggests the regularization terms may be **too weak** to meaningfully shape the learned representations. The λ coefficients were not extensively tuned — increasing `λ_L1` and `λ_KL` by 2–3 orders of magnitude could potentially improve results and make the sparse autoencoder more competitive with MAE. This is a promising direction for future work.
-
-### Why MAE outperforms this approach
+### Why MAE Outperforms
 
 | Aspect | MAE | Sparse Autoencoder |
 |:-------|:----|:-------------------|
-| **Information bottleneck** | Strong — only 25% of tokens visible | Weak — full input available |
-| **Pretext difficulty** | Hard — must infer missing structure | Easy — input ≈ output |
-| **Representation quality** | Learns contextual, predictive features | Learns identity-like mappings |
-| **Regularization** | Implicit (masking forces generalization) | Explicit but undertuned (L1 + KL) |
-
-The masking in MAE creates a much stronger information bottleneck, forcing the encoder to learn meaningful spatial and channel relationships. The sparse autoencoder, with its full-input-available setup and weak regularization, tends toward learning near-identity mappings that don't transfer as well to classification.
+| **Information bottleneck** | Strong — only 25% visible | Weak — full input |
+| **Pretext difficulty** | Hard — infer missing structure | Easy — input ≈ output |
+| **Representation quality** | Contextual, predictive features | Identity-like mappings |
+| **Regularization** | Implicit (masking) | Explicit but undertuned |
 
 ---
 
